@@ -30,6 +30,7 @@ import {
   deleteDoc, 
   getDocs, 
   getDoc,
+  limit,
   writeBatch 
 } from 'firebase/firestore';
 import { db } from './lib/firebase';
@@ -180,7 +181,7 @@ export default function App() {
     });
 
     // 2. Listen for Submissions (Real-time Leaderboard)
-    const q = query(collection(db, 'submissions'), orderBy('timestamp', 'desc'));
+    const q = query(collection(db, 'submissions'), orderBy('score', 'desc'), limit(150));
     const unsubscribeSubmissions = onSnapshot(q, (snapshot) => {
       const subs: Submission[] = [];
       snapshot.forEach((doc) => {
@@ -199,6 +200,7 @@ export default function App() {
     Papa.parse<CSVRow>(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (header) => header.toLowerCase().trim(),
       complete: async (results) => {
         const records = new Set<string>();
         
@@ -238,6 +240,7 @@ export default function App() {
     Papa.parse<CSVRow>(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (header) => header.toLowerCase().trim(),
       complete: async (results) => {
         let correctMatches = 0;
         
