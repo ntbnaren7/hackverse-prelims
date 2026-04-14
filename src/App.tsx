@@ -606,10 +606,11 @@ export default function App() {
                   {submissions.length} Total
                 </div>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-y-auto overflow-x-hidden max-h-[600px] custom-scrollbar rounded-b-[2.5rem]">
                 <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-white/[0.01]">
+                  <thead className="sticky top-0 bg-hack-bg z-10">
+                    <tr className="border-b border-white/10 bg-white/[0.02]">
+                      <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Rank</th>
                       <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Team</th>
                       <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Captain</th>
                       <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Score</th>
@@ -618,8 +619,9 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {submissions.slice().reverse().map((sub) => (
+                    {getLeaderboardData.map((sub, i) => (
                       <tr key={sub.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
+                        <td className="px-8 py-4 font-mono font-bold text-white/60">#{i + 1}</td>
                         <td className="px-8 py-4 font-bold">{sub.teamName}</td>
                         <td className="px-8 py-4 text-white/60">{sub.captainName}</td>
                         <td className="px-8 py-4">
@@ -642,9 +644,9 @@ export default function App() {
                         </td>
                       </tr>
                     ))}
-                    {submissions.length === 0 && (
+                    {getLeaderboardData.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="px-8 py-12 text-center text-white/20 italic text-sm">
+                        <td colSpan={6} className="px-8 py-12 text-center text-white/20 italic text-sm">
                           No submissions recorded yet.
                         </td>
                       </tr>
