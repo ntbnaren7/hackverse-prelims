@@ -64,7 +64,8 @@ const OFFICIAL_FINAL_RESULTS = [
   { id: '12', teamName: "TeamHope", captainName: "Official Match", score: 42.88 },
   { id: '13', teamName: "CodeBlooded", captainName: "Official Match", score: 42.24 },
   { id: '14', teamName: "Neural Ninjas", captainName: "Official Match", score: 42.08 },
-  { id: '15', teamName: "TECH CODERS", captainName: "Official Match", score: 41.92 }
+  { id: '15', teamName: "TECH CODERS", captainName: "Official Match", score: 41.92 },
+  { id: '16', teamName: "syntax squad", captainName: "Official Match", score: 41.44 }
 ];
 
 // --- Components ---
