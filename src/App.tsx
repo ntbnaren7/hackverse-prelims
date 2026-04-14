@@ -34,6 +34,14 @@ import {
 import { db } from './lib/firebase';
 import { CSVRow, Submission, GroundTruth, View } from './types';
 
+// --- Helpers ---
+async function hashRecord(record: string): Promise<string> {
+  const msgUint8 = new TextEncoder().encode(record);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // --- Constants ---
 const ADMIN_ID = 'hackverse@123';
 const ADMIN_PASS = 'Hack@1234';
@@ -192,10 +200,14 @@ export default function App() {
       skipEmptyLines: true,
       complete: async (results) => {
         const records = new Set<string>();
-        results.data.forEach(row => {
+        
+        // Hash all records to prevent exposure
+        const hashes = await Promise.all(results.data.map(async (row) => {
           const key = `${row.date}|${row.team}|${row.time_window}|${row.village}`.toLowerCase().trim();
-          records.add(key);
-        });
+          return await hashRecord(key);
+        }));
+        
+        hashes.forEach(hash => records.add(hash));
 
         try {
           // Save to Firestore
@@ -227,9 +239,15 @@ export default function App() {
       skipEmptyLines: true,
       complete: async (results) => {
         let correctMatches = 0;
-        results.data.forEach(row => {
+        
+        // Hash participant records to compare against the secured ground truth
+        const hashes = await Promise.all(results.data.map(async (row) => {
           const key = `${row.date}|${row.team}|${row.time_window}|${row.village}`.toLowerCase().trim();
-          if (groundTruth.records.has(key)) {
+          return await hashRecord(key);
+        }));
+
+        hashes.forEach(hash => {
+          if (groundTruth.records.has(hash)) {
             correctMatches++;
           }
         });
