@@ -49,6 +49,24 @@ const ADMIN_ID = 'hackverse@123';
 const ADMIN_PASS = 'Hack@1234';
 const IS_HACKATHON_LIVE = false;
 
+const OFFICIAL_FINAL_RESULTS = [
+  { id: '1', teamName: "QUANTUM CODERS", captainName: "Official Match", score: 100 },
+  { id: '2', teamName: "Hackers", captainName: "Official Match", score: 100 },
+  { id: '3', teamName: "GenZ", captainName: "Official Match", score: 100 },
+  { id: '4', teamName: "Digital Dynamos", captainName: "Official Match", score: 100 },
+  { id: '5', teamName: "BYTE CODE", captainName: "Official Match", score: 100 },
+  { id: '6', teamName: "Brain Wavey", captainName: "Official Match", score: 100 },
+  { id: '7', teamName: "ZENMASTER", captainName: "Official Match", score: 100 },
+  { id: '8', teamName: "Beyond Logics", captainName: "Official Match", score: 100 },
+  { id: '9', teamName: "Brogrammers", captainName: "Official Match", score: 51.2 },
+  { id: '10', teamName: "Green sync innovators", captainName: "Official Match", score: 49.76 },
+  { id: '11', teamName: "Hacksmiths", captainName: "Official Match", score: 45.28 },
+  { id: '12', teamName: "TeamHope", captainName: "Official Match", score: 42.88 },
+  { id: '13', teamName: "CodeBlooded", captainName: "Official Match", score: 42.24 },
+  { id: '14', teamName: "Neural Ninjas", captainName: "Official Match", score: 42.08 },
+  { id: '15', teamName: "TECH CODERS", captainName: "Official Match", score: 41.92 }
+];
+
 // --- Components ---
 
 const Navbar = ({ currentView, setView, onLogout }: { currentView: View, setView: (v: View) => void, onLogout: () => void }) => (
@@ -167,6 +185,8 @@ export default function App() {
 
   // --- Persistence ---
   useEffect(() => {
+    if (!IS_HACKATHON_LIVE && view === 'home') return;
+
     // 1. Listen for Ground Truth
     const unsubscribeGT = onSnapshot(doc(db, 'config', 'ground_truth'), (docSnap) => {
       if (docSnap.exists()) {
@@ -384,12 +404,12 @@ export default function App() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="glass p-6 rounded-3xl space-y-2">
                   <Users className="w-6 h-6 text-hack-cyan" />
-                  <div className="text-2xl font-bold">{getLeaderboardData.length}</div>
+                  <div className="text-2xl font-bold">{IS_HACKATHON_LIVE ? getLeaderboardData.length : OFFICIAL_FINAL_RESULTS.length}</div>
                   <div className="text-xs text-white/40 uppercase tracking-widest">Active Teams</div>
                 </div>
                 <div className="glass p-6 rounded-3xl space-y-2">
                   <Clock className="w-6 h-6 text-hack-magenta" />
-                  <div className="text-2xl font-bold">{submissions.length}</div>
+                  <div className="text-2xl font-bold">{IS_HACKATHON_LIVE ? submissions.length : '182'}</div>
                   <div className="text-xs text-white/40 uppercase tracking-widest">Total Attempts</div>
                 </div>
               </div>
@@ -459,7 +479,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {getLeaderboardData.slice(0, 35).map((sub, i) => (
+                    {(IS_HACKATHON_LIVE ? getLeaderboardData.slice(0, 35) : OFFICIAL_FINAL_RESULTS).map((sub, i) => (
                       <motion.tr 
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
