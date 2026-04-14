@@ -29,6 +29,7 @@ import {
   addDoc, 
   deleteDoc, 
   getDocs, 
+  getDoc,
   writeBatch 
 } from 'firebase/firestore';
 import { db } from './lib/firebase';
@@ -252,19 +253,33 @@ export default function App() {
           }
         });
 
-        const score = (correctMatches / groundTruth.totalRows) * 100;
+        const scoreVal = parseFloat(((correctMatches / groundTruth.totalRows) * 100).toFixed(2));
+        const teamId = teamName.trim().toLowerCase().replace(/\s+/g, '');
+        
         const newSubmission = {
           teamName: teamName.trim(),
           captainName: captainName.trim(),
-          score: parseFloat(score.toFixed(2)),
+          score: scoreVal,
           timestamp: Date.now()
         };
 
         try {
-          await addDoc(collection(db, 'submissions'), newSubmission);
+          const docRef = doc(db, 'submissions', teamId);
+          const existingDoc = await getDoc(docRef);
+          
+          if (existingDoc.exists() && existingDoc.data().score >= scoreVal) {
+            setSubmitStatus({ 
+              type: 'success', 
+              message: `Evaluated! Score: ${scoreVal}%. (Your previous best of ${existingDoc.data().score}% remains on the leaderboard)` 
+            });
+            setIsSubmitting(false);
+            return;
+          }
+
+          await setDoc(docRef, newSubmission);
           setSubmitStatus({ 
             type: 'success', 
-            message: `Submission successful! Score: ${newSubmission.score}%` 
+            message: `Submission successful! New High Score: ${newSubmission.score}%` 
           });
         } catch (err) {
           setSubmitStatus({ type: 'error', message: 'Failed to save submission. Check connection.' });
