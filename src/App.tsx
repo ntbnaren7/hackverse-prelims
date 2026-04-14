@@ -17,8 +17,19 @@ import {
   User,
   Users
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { cn } from './lib/utils';
+import { 
+  collection, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  doc, 
+  setDoc, 
+  addDoc, 
+  deleteDoc, 
+  getDocs, 
+  writeBatch 
+} from 'firebase/firestore';
+import { db } from './lib/firebase';
 import { CSVRow, Submission, GroundTruth, View } from './types';
 
 // --- Constants ---
@@ -143,49 +154,50 @@ export default function App() {
 
   // --- Persistence ---
   useEffect(() => {
-    const savedGT = localStorage.getItem('hackverse_ground_truth');
-    if (savedGT) {
-      const parsed = JSON.parse(savedGT);
-      setGroundTruth({
-        ...parsed,
-        records: new Set(parsed.records)
-      });
-    }
+    // 1. Listen for Ground Truth
+    const unsubscribeGT = onSnapshot(doc(db, 'config', 'ground_truth'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setGroundTruth({
+          records: new Set(data.records),
+          totalRows: data.totalRows,
+          fileName: data.fileName
+        });
+      } else {
+        setGroundTruth(null);
+      }
+    });
 
-    const savedSubmissions = localStorage.getItem('hackverse_submissions');
-    if (savedSubmissions) {
-      setSubmissions(JSON.parse(savedSubmissions));
-    }
+    // 2. Listen for Submissions (Real-time Leaderboard)
+    const q = query(collection(db, 'submissions'), orderBy('timestamp', 'desc'));
+    const unsubscribeSubmissions = onSnapshot(q, (snapshot) => {
+      const subs: Submission[] = [];
+      snapshot.forEach((doc) => {
+        subs.push({ id: doc.id, ...doc.data() } as Submission);
+      });
+      setSubmissions(subs);
+    });
+
+    return () => {
+      unsubscribeGT();
+      unsubscribeSubmissions();
+    };
   }, []);
 
-  useEffect(() => {
-    if (groundTruth) {
-      localStorage.setItem('hackverse_ground_truth', JSON.stringify({
-        ...groundTruth,
-        records: Array.from(groundTruth.records)
-      }));
-    } else {
-      localStorage.removeItem('hackverse_ground_truth');
-    }
-  }, [groundTruth]);
-
-  useEffect(() => {
-    localStorage.setItem('hackverse_submissions', JSON.stringify(submissions));
-  }, [submissions]);
-
-  // --- Logic ---
-  const handleGroundTruthUpload = (file: File) => {
+  const handleGroundTruthUpload = async (file: File) => {
     Papa.parse<CSVRow>(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: async (results) => {
         const records = new Set<string>();
         results.data.forEach(row => {
           const key = `${row.date}|${row.team}|${row.time_window}|${row.village}`.toLowerCase().trim();
           records.add(key);
         });
-        setGroundTruth({
-          records,
+
+        // Save to Firestore
+        await setDoc(doc(db, 'config', 'ground_truth'), {
+          records: Array.from(records),
           totalRows: results.data.length,
           fileName: file.name
         });
@@ -193,7 +205,7 @@ export default function App() {
     });
   };
 
-  const handleUserSubmission = (teamName: string, captainName: string, file: File) => {
+  const handleUserSubmission = async (teamName: string, captainName: string, file: File) => {
     if (!groundTruth) {
       setSubmitStatus({ type: 'error', message: 'Ground truth dataset not loaded. Contact admin.' });
       return;
@@ -205,7 +217,7 @@ export default function App() {
     Papa.parse<CSVRow>(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: async (results) => {
         let correctMatches = 0;
         results.data.forEach(row => {
           const key = `${row.date}|${row.team}|${row.time_window}|${row.village}`.toLowerCase().trim();
@@ -215,19 +227,22 @@ export default function App() {
         });
 
         const score = (correctMatches / groundTruth.totalRows) * 100;
-        const newSubmission: Submission = {
-          id: Math.random().toString(36).substr(2, 9),
+        const newSubmission = {
           teamName: teamName.trim(),
           captainName: captainName.trim(),
           score: parseFloat(score.toFixed(2)),
           timestamp: Date.now()
         };
 
-        setSubmissions(prev => [...prev, newSubmission]);
-        setSubmitStatus({ 
-          type: 'success', 
-          message: `Submission successful! Score: ${newSubmission.score}%` 
-        });
+        try {
+          await addDoc(collection(db, 'submissions'), newSubmission);
+          setSubmitStatus({ 
+            type: 'success', 
+            message: `Submission successful! Score: ${newSubmission.score}%` 
+          });
+        } catch (err) {
+          setSubmitStatus({ type: 'error', message: 'Failed to save submission. Check connection.' });
+        }
         setIsSubmitting(false);
       },
       error: (err) => {
@@ -514,9 +529,14 @@ export default function App() {
                       Wipe all submission data and reset rankings to zero. This action is irreversible.
                     </p>
                     <button 
-                      onClick={() => {
-                        if (confirm('Are you absolutely sure? This will delete all submissions.')) {
-                          setSubmissions([]);
+                      onClick={async () => {
+                        if (confirm('Are you absolutely sure? This will delete all submissions from the database.')) {
+                          const querySnapshot = await getDocs(collection(db, 'submissions'));
+                          const batch = writeBatch(db);
+                          querySnapshot.forEach((d) => {
+                            batch.delete(d.ref);
+                          });
+                          await batch.commit();
                         }
                       }}
                       className="w-full py-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold italic uppercase tracking-widest text-sm border border-red-500/20 transition-all"
@@ -569,7 +589,11 @@ export default function App() {
                         </td>
                         <td className="px-8 py-4 text-right">
                           <button 
-                            onClick={() => setSubmissions(prev => prev.filter(s => s.id !== sub.id))}
+                            onClick={async () => {
+                              if (confirm('Delete this submission?')) {
+                                await deleteDoc(doc(db, 'submissions', sub.id));
+                              }
+                            }}
                             className="p-2 rounded-lg hover:bg-red-500/10 text-white/20 hover:text-red-400 transition-all"
                           >
                             <Trash2 className="w-4 h-4" />
