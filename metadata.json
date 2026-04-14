@@ -1,0 +1,6 @@
+{
+  "name": "Hackverse Leaderboard",
+  "description": "A modern, high-performance leaderboard system for hackathons with CSV-based evaluation and admin controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
