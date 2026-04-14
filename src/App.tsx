@@ -254,7 +254,7 @@ export default function App() {
         });
 
         const scoreVal = parseFloat(((correctMatches / groundTruth.totalRows) * 100).toFixed(2));
-        const teamId = teamName.trim().toLowerCase().replace(/\s+/g, '');
+        const teamId = (teamName + "_" + captainName).toLowerCase().replace(/\s+/g, '');
         
         const newSubmission = {
           teamName: teamName.trim(),
@@ -296,7 +296,7 @@ export default function App() {
   const getLeaderboardData = useMemo(() => {
     const teamBestScores: Record<string, Submission> = {};
     submissions.forEach(sub => {
-      const key = sub.teamName.toLowerCase();
+      const key = (sub.teamName + "_" + sub.captainName).toLowerCase().replace(/\s+/g, '');
       if (!teamBestScores[key] || sub.score > teamBestScores[key].score) {
         teamBestScores[key] = sub;
       }
