@@ -197,12 +197,18 @@ export default function App() {
           records.add(key);
         });
 
-        // Save to Firestore
-        await setDoc(doc(db, 'config', 'ground_truth'), {
-          records: Array.from(records),
-          totalRows: results.data.length,
-          fileName: file.name
-        });
+        try {
+          // Save to Firestore
+          await setDoc(doc(db, 'config', 'ground_truth'), {
+            records: Array.from(records),
+            totalRows: results.data.length,
+            fileName: file.name
+          });
+          alert('Master Ground Truth uploaded successfully!');
+        } catch (error: any) {
+          console.error("Firebase upload error:", error);
+          alert(`Upload failed: ${error.message}\n\nThis usually happens if the database rules are denying write access, or if the CSV file is too large for a single document (> 1MB).`);
+        }
       }
     });
   };
