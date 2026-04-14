@@ -47,6 +47,7 @@ async function hashRecord(record: string): Promise<string> {
 // --- Constants ---
 const ADMIN_ID = 'hackverse@123';
 const ADMIN_PASS = 'Hack@1234';
+const IS_HACKATHON_LIVE = false;
 
 // --- Components ---
 
@@ -352,20 +353,31 @@ export default function App() {
             {/* Left: Hero & Info */}
             <div className="space-y-8">
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-hack-cyan/10 border border-hack-cyan/20 text-hack-cyan text-xs font-bold tracking-wider uppercase">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-hack-cyan opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-hack-cyan"></span>
-                  </span>
-                  Live Evaluation System
+                <div className={cn(
+                  "inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase border",
+                  IS_HACKATHON_LIVE 
+                    ? "bg-hack-cyan/10 border-hack-cyan/20 text-hack-cyan"
+                    : "bg-hack-green/10 border-hack-green/20 text-hack-green"
+                )}>
+                  {IS_HACKATHON_LIVE && (
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-hack-cyan opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-hack-cyan"></span>
+                    </span>
+                  )}
+                  {IS_HACKATHON_LIVE ? "Live Evaluation System" : "Official Results Published"}
                 </div>
                 <h2 className="text-7xl font-bold tracking-tighter leading-[0.9]">
-                  PUSH YOUR <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-hack-cyan via-hack-magenta to-hack-cyan bg-[length:200%_auto] animate-gradient-x">LIMITS</span>
+                  {IS_HACKATHON_LIVE ? (
+                    <>PUSH YOUR <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-hack-cyan via-hack-magenta to-hack-cyan bg-[length:200%_auto] animate-gradient-x">LIMITS</span></>
+                  ) : (
+                    <>MISSION <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-hack-green via-hack-cyan to-hack-green bg-[length:200%_auto] animate-gradient-x">ACCOMPLISHED</span></>
+                  )}
                 </h2>
                 <p className="text-lg text-white/60 max-w-md">
-                  Submit your dataset and claim your spot on the leaderboard. 
-                  Precision is the only currency that matters here.
+                  {IS_HACKATHON_LIVE 
+                    ? "Submit your dataset and claim your spot on the leaderboard. Precision is the only currency that matters here."
+                    : "The evaluation is complete. Thank you to all the brilliant minds who pushed the boundaries of the Hackverse today."}
                 </p>
               </div>
 
@@ -384,32 +396,57 @@ export default function App() {
             </div>
 
             {/* Right: Submission Portal */}
-            <div className="glass p-8 rounded-[2.5rem] relative overflow-hidden neon-shadow-cyan">
+            <div className="glass p-8 rounded-[2.5rem] relative overflow-hidden neon-shadow-cyan flex flex-col justify-center">
               <div className="absolute top-0 right-0 w-32 h-32 bg-hack-cyan/10 blur-3xl rounded-full -mr-16 -mt-16"></div>
               
-              <div className="flex items-center gap-3 mb-8">
-                <Upload className="w-6 h-6 text-hack-cyan" />
-                <h3 className="text-2xl font-bold italic uppercase tracking-tight">Submission Portal</h3>
-              </div>
+              {IS_HACKATHON_LIVE ? (
+                <>
+                  <div className="flex items-center gap-3 mb-8">
+                    <Upload className="w-6 h-6 text-hack-cyan" />
+                    <h3 className="text-2xl font-bold italic uppercase tracking-tight">Submission Portal</h3>
+                  </div>
 
-              <SubmissionForm 
-                onSubmit={handleUserSubmission} 
-                isSubmitting={isSubmitting} 
-                status={submitStatus}
-              />
+                  <SubmissionForm 
+                    onSubmit={handleUserSubmission} 
+                    isSubmitting={isSubmitting} 
+                    status={submitStatus}
+                  />
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center py-6 space-y-6">
+                  <div className="w-24 h-24 bg-hack-green/10 rounded-full flex items-center justify-center border border-hack-green/20 mb-2 shadow-[0_0_30px_rgba(57,255,20,0.15)]">
+                    <CheckCircle2 className="w-12 h-12 text-hack-green" />
+                  </div>
+                  <h3 className="text-4xl font-bold italic uppercase tracking-tight">Grand Finale</h3>
+                  <p className="text-sm text-white/60 leading-relaxed px-4">
+                    The evaluation servers have securely powered down. All submissions are now permanently locked into the blockchain. Verify your final global ranking below.
+                  </p>
+                  <div className="px-6 py-2 rounded-full border border-hack-green/20 bg-hack-green/5 text-hack-green text-xs font-bold tracking-[0.2em] uppercase mt-2">
+                    Systems Frozen
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Bottom: Leaderboard */}
             <div className="lg:col-span-2 mt-12">
               <div className="flex flex-col items-center mb-12">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-hack-magenta/30 bg-hack-magenta/5 text-hack-magenta text-xs font-bold uppercase tracking-widest mb-4">
+                <div className={cn(
+                  "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border",
+                  IS_HACKATHON_LIVE 
+                    ? "border-hack-magenta/30 bg-hack-magenta/5 text-hack-magenta" 
+                    : "border-amber-400/30 bg-amber-400/5 text-amber-400"
+                )}>
                   <Trophy className="w-3 h-3" />
-                  Global Rankings
+                  {IS_HACKATHON_LIVE ? "Global Rankings" : "Final Standings"}
                 </div>
                 <h2 className="text-5xl font-bold italic tracking-tighter uppercase text-center">
-                  Hall of <span className="text-hack-cyan">Legends</span>
+                  Hall of <span className={IS_HACKATHON_LIVE ? "text-hack-cyan" : "text-amber-400"}>Legends</span>
                 </h2>
-                <div className="w-24 h-1 bg-gradient-to-r from-hack-cyan to-hack-magenta mt-4 rounded-full"></div>
+                <div className={cn(
+                  "w-24 h-1 mt-4 rounded-full",
+                  IS_HACKATHON_LIVE ? "bg-gradient-to-r from-hack-cyan to-hack-magenta" : "bg-gradient-to-r from-amber-400 to-hack-magenta"
+                )}></div>
               </div>
 
               <div className="glass rounded-[2rem] overflow-hidden">
@@ -433,11 +470,12 @@ export default function App() {
                         <td className="px-8 py-6">
                           <div className={cn(
                             "w-8 h-8 rounded-lg flex items-center justify-center font-mono font-bold text-sm",
-                            i === 0 ? "bg-hack-cyan text-black neon-shadow-cyan" : 
+                            i === 0 && IS_HACKATHON_LIVE ? "bg-hack-cyan text-black neon-shadow-cyan" : 
+                            i === 0 && !IS_HACKATHON_LIVE ? "bg-amber-400 text-black shadow-[0_0_20px_rgba(251,191,36,0.3)] text-xl leading-none" : 
                             i === 1 ? "bg-white/20 text-white" :
                             i === 2 ? "bg-white/10 text-white/80" : "text-white/40"
                           )}>
-                            {i + 1}
+                            {i === 0 && !IS_HACKATHON_LIVE ? "👑" : i + 1}
                           </div>
                         </td>
                         <td className="px-8 py-6">
