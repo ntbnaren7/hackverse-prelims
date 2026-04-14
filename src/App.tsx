@@ -419,7 +419,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {getLeaderboardData.slice(0, 15).map((sub, i) => (
+                    {getLeaderboardData.slice(0, 35).map((sub, i) => (
                       <motion.tr 
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
